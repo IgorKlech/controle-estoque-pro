@@ -5,5 +5,19 @@
     "estoque": 200,
     "embalagem": "Tambor",
     "empresa": "Kemisk"
+  },
+  {
+    "cod": "02",
+    "nome": "Óleo de Soja",
+    "estoque": 200,
+    "embalagem": "Tambor",
+    "empresa": "Almad"
+  },
+  {
+    "cod": "PLA-001",
+    "nome": "Plástico ABS",
+    "estoque": 50,
+    "embalagem": "Saco",
+    "empresa": "Plásticos Ltda"
   }
 ]
