@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Controle de Estoque - Web</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 50px auto; padding: 20px; background: #f5f5f5; }
+        .form-group { background: #f9f9f9; padding: 20px; margin: 20px 0; border-radius: 8px; border: 1px solid #ddd; }
+        input { width: 100%; padding: 10px; margin: 5px 0; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: #28a745; color: white; padding: 12px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-size: 16px; }
+        button:hover { background: #218838; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        #resultado { margin-top: 20px; padding: 15px; border-radius: 4px; display: none; }
+        .sucesso { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .erro { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #007bff; color: white; }
+        tr:nth-child(even) { background: #f8f9fa; }
+        .loading { opacity: 0.6; }
+    </style>
+</head>
+<body>
+    <h1>📦 Controle de Estoque</h1>
+    <p><small>API: <a href="/docs" target="_blank">Swagger Docs</a></small></p>
+
+    <!-- Formulário MP Entrada -->
+    <div class="form-group">
+        <h3>🛒 Matéria-Prima - Entrada</h3>
+        <input id="mp-ordem" placeholder="Ordem de Compra (OC-001)">
+        <input id="mp-cod" placeholder="Código (ACO-001)">
+        <input id="mp-nome" placeholder="Nome do Produto">
+        <input id="mp-qtd" type="number" placeholder="Quantidade" min="1">
+        <input id="mp-emb" placeholder="Embalagem">
+        <input id="mp-emp" placeholder="Empresa">
+        <button id="btn-mp-entrada" onclick="mpEntrada()">Registrar Entrada</button>
+    </div>
+
+    <!-- Estoque MP -->
+    <div class="form-group">
+        <h3>📋 Estoque Matéria-Prima</h3>
+        <button onclick="listarMPEstoque()">🔄 Atualizar Lista</button>
+        <table id="tabela-mp">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Nome</th>
+                    <th>Estoque</th>
+                    <th>Embalagem</th>
+                    <th>Empresa</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- Resultado -->
+    <div id="resultado"></div>
+
+    <script>
+        console.log("JavaScript carregado");
+
+        async function mpEntrada() {
+            const btn = document.getElementById('btn-mp-entrada');
+            btn.disabled = true;
+            btn.textContent = 'Enviando...';
+            btn.parentElement.classList.add('loading');
+
+            const dados = {
+                ordem_compra: document.getElementById('mp-ordem').value,
+                cod_produto: document.getElementById('mp-cod').value,
+                nome_produto: document.getElementById('mp-nome').value,
+                quantidade: parseInt(document.getElementById('mp-qtd').value),
+                embalagem: document.getElementById('mp-emb').value,
+                empresa: document.getElementById('mp-emp').value
+            };
+
+            try {
+                console.log("Enviando:", dados);
+                const response = await fetch('/api/mp/entrada', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(dados)
+                });
+
+                const resultado = await response.json();
+                console.log("Resposta:", resultado);
+
+                if (response.ok) {
+                    mostrarResultado(`✅ ${resultado.mensagem}`, 'sucesso');
+                    listarMPEstoque();  // atualizar tabela
+                    // Limpar form
+                    document.querySelectorAll('input').forEach(input => input.value = '');
+                } else {
+                    mostrarResultado(`❌ ${resultado.detail || 'Erro desconhecido'}`, 'erro');
+                }
+            } catch (error) {
+                console.error('Erro completo:', error);
+                mostrarResultado(`❌ Erro de conexão: ${error.message}`, 'erro');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Registrar Entrada';
+                btn.parentElement.classList.remove('loading');
+            }
+        }
+
+        async function listarMPEstoque() {
+            const tabelaBody = document.querySelector('#tabela-mp tbody');
+            tabelaBody.innerHTML = '<tr><td colspan="5">Carregando...</td></tr>';
+
+            try {
+                const response = await fetch('/api/mp/estoque');
+                const data = await response.json();
+
+                tabelaBody.innerHTML = '';
+                if (data.itens && data.itens.length > 0) {
+                    data.itens.forEach(item => {
+                        const row = tabelaBody.insertRow();
+                        row.insertCell(0).textContent = item.cod || '';
+                        row.insertCell(1).textContent = item.nome || '';
+                        row.insertCell(2).textContent = item.estoque || 0;
+                        row.insertCell(3).textContent = item.embalagem || '';
+                        row.insertCell(4).textContent = item.empresa || '';
+                    });
+                } else {
+                    tabelaBody.innerHTML = '<tr><td colspan="5">Nenhum item no estoque</td></tr>';
+                }
+            } catch (error) {
+                console.error('Erro listar MP:', error);
+                tabelaBody.innerHTML = '<tr><td colspan="5" style="color:red;">Erro ao carregar estoque</td></tr>';
+            }
+        }
+
+        function mostrarResultado(mensagem, tipo) {
+            const div = document.getElementById('resultado');
+            div.textContent = mensagem;
+            div.className = tipo;
+            div.style.display = 'block';
+            setTimeout(() => div.style.display = 'none', 5000);
+        }
+
+        // Carregar estoque ao abrir página
+        window.onload = () => {
+            console.log("Página carregada");
+            listarMPEstoque();
+        };
+    </script>
+</body>
+</html>

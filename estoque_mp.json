@@ -19,5 +19,19 @@
     "estoque": 50,
     "embalagem": "Saco",
     "empresa": "Plásticos Ltda"
+  },
+  {
+    "cod": "NOVO-001",
+    "nome": "Novo Produto",
+    "estoque": 10,
+    "embalagem": "Unidade",
+    "empresa": "Nova Ltda"
+  },
+  {
+    "cod": "TESTE",
+    "nome": "Teste via API",
+    "estoque": 10,
+    "embalagem": "Caixa",
+    "empresa": "Empresa X"
   }
 ]
